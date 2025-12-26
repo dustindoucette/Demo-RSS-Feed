@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from feedgen.feed import FeedGenerator
 
-URL = "https://example.com/page"
+URL = "https://sta-russell.cdsbeo.on.ca/apps/news/"
 HASH_FILE = "data/last_hash.txt"
 RSS_FILE = "public/rss.xml"
 
