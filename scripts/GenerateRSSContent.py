@@ -50,7 +50,7 @@ with open(HASH_FILE, "w") as f:
 # Create or update RSS
 fg = FeedGenerator()
 fg.title("Change Monitor Feed")
-fg.link(href="https://yourusername.github.io/yourrepo", rel="alternate")
+fg.link(href="https://dustindoucette.github.io/Demo-RSS-Feed", rel="alternate")
 fg.description("Updates only when content changes")
 
 fe = fg.add_entry()
