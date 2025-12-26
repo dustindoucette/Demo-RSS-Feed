@@ -6,7 +6,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from feedgen.feed import FeedGenerator
 
-# Detect if this is a manual workflow run
+# Detect if this is a manual GitHub Actions run
 manual_run = os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch"
 
 URL = "https://sta-russell.cdsbeo.on.ca/apps/news/"
@@ -23,7 +23,7 @@ def hash_content(text: str) -> str:
 # Ensure data folder exists
 os.makedirs("data", exist_ok=True)
 
-# Fetch content from the site
+# Fetch content
 res = requests.get(
     URL,
     headers={"User-Agent": "RSS-Monitor/1.0"},
@@ -64,8 +64,7 @@ fg.description("Updates only when content changes")
 # Main site link
 fg.link(href="https://dustindoucette.github.io/Demo-RSS-Feed", rel="alternate")
 
-# Load atom namespace and add self-link
-fg.load_extension('atom')
+# Atom self-link for feed readers
 fg.atom_link(
     href="https://dustindoucette.github.io/Demo-RSS-Feed/rss.xml",
     rel="self",
