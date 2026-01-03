@@ -10,7 +10,7 @@ from xml.dom import minidom
 # Detect manual GitHub Actions run
 manual_run = os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch"
 
-URL = "https://sta-russell.cdsbeo.on.ca/apps/pages/index.jsp?uREC_ID=1100697&type=d&pREC_ID=1399309"
+URL = "https://sta-russell.cdsbeo.on.ca/apps/pages/DailyAnnouncements"
 HASH_FILE = "data/last_hash.txt"
 
 def normalize(text: str) -> str:
