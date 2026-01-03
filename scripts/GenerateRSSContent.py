@@ -7,17 +7,21 @@ from zoneinfo import ZoneInfo
 from feedgen.feed import FeedGenerator
 from dateutil import parser as dateparser  # pip install python-dateutil
 
+# Detect manual GitHub Actions run
 manual_run = os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch"
 
 URL = "https://sta-russell.cdsbeo.on.ca/apps/pages/index.jsp?uREC_ID=1100697&type=d&pREC_ID=1399309"
 HASH_FILE = "data/last_hash.txt"
 
 def normalize(text: str) -> str:
+    """Normalize whitespace in text."""
     return " ".join(text.split())
 
 def hash_content(text: str) -> str:
+    """Return SHA256 hash of the given text."""
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
+# Ensure data folder exists
 os.makedirs("data", exist_ok=True)
 
 # ---------------------------
@@ -47,7 +51,7 @@ for el in main.find_all(True, recursive=True):
         if current_title and current_paragraphs:
             articles.append({
                 "title": normalize(current_title),
-                "description": "\n".join(current_paragraphs)  # YoDeck friendly newlines
+                "description": "\n".join(current_paragraphs)  # keep literal newlines
             })
         current_title = el.get_text(strip=True)
         current_paragraphs = []
@@ -118,7 +122,8 @@ for article in articles:
     fe = fg.add_entry()
     fe.title(article["title"])
     fe.link(href=URL)
-    fe.description(article["description"])  # plain text with \n for YoDeck
+    # Use CDATA with literal newlines for YoDeck
+    fe.content(article["description"], type="CDATA")
     fe.pubDate(now)
     fe.guid(hash_content(article["title"] + article["description"]), permalink=False)
 
