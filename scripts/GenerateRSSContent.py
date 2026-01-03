@@ -1,12 +1,11 @@
 import hashlib
 import os
 import requests
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup, Tag, NavigableString
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from feedgen.feed import FeedGenerator
 
-# Detect manual GitHub Actions run
 manual_run = os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch"
 
 URL = "https://sta-russell.cdsbeo.on.ca/apps/pages/index.jsp?uREC_ID=1100697&type=d&pREC_ID=1399309"
@@ -18,12 +17,9 @@ def normalize(text: str) -> str:
 def hash_content(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
-# Ensure data directory exists
 os.makedirs("data", exist_ok=True)
 
-# ---------------------------
-# Fetch page
-# ---------------------------
+# Fetch the page
 res = requests.get(
     URL,
     headers={"User-Agent": "RSS-Monitor/1.0"},
@@ -32,55 +28,56 @@ res = requests.get(
 res.raise_for_status()
 
 soup = BeautifulSoup(res.text, "html.parser")
-
 main = soup.find("main")
+
 if not main:
     raise RuntimeError("Main content not found")
 
-# ---------------------------
-# Extract headers + paragraphs
-# ---------------------------
+# Extract headings + paragraphs
 articles = []
+current_title = None
+current_paragraphs = []
 
-headers = main.find_all(["h1", "h2", "h3"])
+# We iterate through all tags in main in order
+for el in main.descendants:
+    # Only consider Tag (not strings directly)
+    if isinstance(el, Tag):
+        # If it's a header <h2> (or any level), treat as a new item
+        if el.name == "h2":
+            # Save the previous one
+            if current_title and current_paragraphs:
+                articles.append({
+                    "title": normalize(current_title),
+                    "description": normalize(" ".join(current_paragraphs))
+                })
+            current_title = el.get_text(strip=True)
+            current_paragraphs = []
+            continue
 
-for header in headers:
-    title = normalize(header.get_text())
-    paragraphs = []
+        # If it's a paragraph, add its text (if we already have a title)
+        if el.name == "p" and current_title:
+            text = normalize(el.get_text())
+            if text:
+                current_paragraphs.append(text)
 
-    for el in header.next_elements:
-        if isinstance(el, Tag):
-            # Stop at the next header
-            if el.name in ["h1", "h2", "h3"] and el is not header:
-                break
-            # Collect all paragraphs, even nested
-            if el.name == "p":
-                text = normalize(el.get_text())
-                if text:
-                    paragraphs.append(text)
-
-    description = " ".join(paragraphs)
-
-    if title and description:
-        articles.append({
-            "title": title,
-            "description": description
-        })
+# Capture the last section
+if current_title and current_paragraphs:
+    articles.append({
+        "title": normalize(current_title),
+        "description": normalize(" ".join(current_paragraphs))
+    })
 
 if not articles:
-    raise RuntimeError("No announcements found")
+    raise RuntimeError("No valid announcements found")
 
-# ---------------------------
-# Hash extracted content
-# ---------------------------
-hash_source = "".join(a["title"] + a["description"] for a in articles)
-new_hash = hash_content(hash_source)
+# Hash all content
+hash_src = "".join(a["title"] + a["description"] for a in articles)
+new_hash = hash_content(hash_src)
 
 old_hash = None
 if os.path.exists(HASH_FILE):
     old_hash = open(HASH_FILE).read().strip()
 
-# Skip update if unchanged (unless manual run)
 if new_hash == old_hash and not manual_run:
     print("No change detected")
     exit(0)
@@ -91,17 +88,11 @@ if not manual_run:
     with open(HASH_FILE, "w") as f:
         f.write(new_hash)
 
-# ---------------------------
-# Build RSS feed
-# ---------------------------
+# Build RSS
 fg = FeedGenerator()
 fg.title("STA Russell Announcements")
 fg.description("Latest announcements from STA Russell")
-
-# Website link
 fg.link(href=URL, rel="alternate")
-
-# Atom self link (required by some readers)
 fg.link(
     href="https://dustindoucette.github.io/Demo-RSS-Feed/rss.xml",
     rel="self",
@@ -116,10 +107,6 @@ for article in articles:
     fe.link(href=URL)
     fe.description(article["description"])
     fe.pubDate(now)
-    fe.guid(
-        hash_content(article["title"] + article["description"]),
-        permalink=False
-    )
+    fe.guid(hash_content(article["title"] + article["description"]), permalink=False)
 
-# Write RSS file
 fg.rss_file("rss.xml")
