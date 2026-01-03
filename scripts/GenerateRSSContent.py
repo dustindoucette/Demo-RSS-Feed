@@ -1,7 +1,7 @@
 import hashlib
 import os
 import requests
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from feedgen.feed import FeedGenerator
@@ -32,7 +32,6 @@ res.raise_for_status()
 
 soup = BeautifulSoup(res.text, "html.parser")
 main = soup.find("main")
-
 if not main:
     raise RuntimeError("Main content not found")
 
@@ -46,10 +45,9 @@ current_paragraphs = []
 for el in main.find_all(True, recursive=True):
     if el.name == "h2":
         if current_title and current_paragraphs:
-            # Use <br /> for line breaks between paragraphs
             articles.append({
                 "title": normalize(current_title),
-                "description": "<br />".join(current_paragraphs)
+                "description": "\n".join(current_paragraphs)  # YoDeck friendly newlines
             })
         current_title = el.get_text(strip=True)
         current_paragraphs = []
@@ -64,7 +62,7 @@ for el in main.find_all(True, recursive=True):
 if current_title and current_paragraphs:
     articles.append({
         "title": normalize(current_title),
-        "description": "<br />".join(current_paragraphs)
+        "description": "\n".join(current_paragraphs)
     })
 
 if not articles:
@@ -77,7 +75,7 @@ def parse_date(title: str):
     try:
         return dateparser.parse(title)
     except Exception:
-        return datetime.min  # fallback for non-date headers
+        return datetime.min
 
 articles.sort(key=lambda x: parse_date(x["title"]))  # oldest first
 
@@ -120,11 +118,9 @@ for article in articles:
     fe = fg.add_entry()
     fe.title(article["title"])
     fe.link(href=URL)
-    fe.description(article["description"])  # now with <br /> line breaks
+    fe.description(article["description"])  # plain text with \n for YoDeck
     fe.pubDate(now)
-    fe.guid(
-        hash_content(article["title"] + article["description"]),
-        permalink=False
-    )
+    fe.guid(hash_content(article["title"] + article["description"]), permalink=False)
 
+# Save RSS
 fg.rss_file("rss.xml")
