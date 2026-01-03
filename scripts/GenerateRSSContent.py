@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from feedgen.feed import FeedGenerator
-from dateutil import parser as dateparser
 from xml.dom import minidom
 
 # Detect manual GitHub Actions run
@@ -41,7 +40,7 @@ if not main:
     raise RuntimeError("Main content not found")
 
 # ---------------------------
-# Extract headers (<h2>) + paragraphs
+# Extract headers (<h2>) + paragraphs in page order
 # ---------------------------
 articles = []
 current_title = None
@@ -74,15 +73,6 @@ if current_title and current_paragraphs:
 
 if not articles:
     raise RuntimeError("No announcements found")
-
-# ---------------------------
-# Sort articles chronologically based on title (parsed as date)
-# ---------------------------
-def parse_date(title: str):
-    try:
-        return dateparser.parse(title)
-    except Exception:
-        return datetime.min
 
 # ---------------------------
 # Hash content
@@ -123,8 +113,7 @@ for article in articles:
     fe = fg.add_entry()
     fe.title(article["title"])
     fe.link(href=URL)
-    # Direct HTML in description, no CDATA
-    fe.description(article["description"])
+    fe.description(article["description"])  # HTML <p> tags included
     fe.pubDate(now)
     fe.guid(hash_content(article["title"] + article["description"]), permalink=False)
 
