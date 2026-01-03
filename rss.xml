@@ -1,7 +1,74 @@
-<?xml version='1.0' encoding='UTF-8'?>
-<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0"><channel><title>STA Russell Announcements</title><link>https://dustindoucette.github.io/Demo-RSS-Feed/rss.xml</link><description>Latest announcements from STA Russell</description><atom:link href="https://dustindoucette.github.io/Demo-RSS-Feed/rss.xml" rel="self" type="application/rss+xml"/><docs>http://www.rssboard.org/rss-specification</docs><generator>python-feedgen</generator><lastBuildDate>Sat, 03 Jan 2026 16:14:47 +0000</lastBuildDate><item><title>Monday, December 15th</title><link>https://sta-russell.cdsbeo.on.ca/apps/pages/index.jsp?uREC_ID=1100697&amp;type=d&amp;pREC_ID=1399309</link><description><![CDATA[A reminder that course selection sheets for next year are due to your homeroom teacher by Friday. If you have any questions about your choices, please stop by Guidance during lunch.
-Attention all students: There will be a student council meeting today at lunch in Room 214. New members are always welcome—come share your ideas and get involved!
-Athletics update: The senior boys’ basketball team has a home game tonight at 3:30 p.m. Come out and support the team. Go Ravens!
-Community involvement reminder: Students still working on their 40 volunteer hours are encouraged to check the school website for approved opportunities or speak with a Guidance Counsellor for help getting started.
-Friendly reminder: Please make sure you are placing garbage and recycling in the correct bins throughout the school. Let’s all do our part to keep our school clean and welcoming.]]></description><guid isPermaLink="false">67d7df0aadf843474e6699d30a8a2e7b5f884c25c4ff551dcf746358922a8c00</guid><pubDate>Sat, 03 Jan 2026 11:14:47 -0500</pubDate></item><item><title>Tuesday, Dec 1</title><link>https://sta-russell.cdsbeo.on.ca/apps/pages/index.jsp?uREC_ID=1100697&amp;type=d&amp;pREC_ID=1399309</link><description><![CDATA[jsjdh
-qhhj]]></description><guid isPermaLink="false">e553e74d218e5672c6fe90a2dc2b1028f855ead27db1623e82789cbadb4b0804</guid><pubDate>Sat, 03 Jan 2026 11:14:47 -0500</pubDate></item></channel></rss>
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/" version="2.0">
+  
+  
+  <channel>
+    
+    
+    <title>STA Russell Announcements</title>
+    
+    
+    <link>https://dustindoucette.github.io/Demo-RSS-Feed/rss.xml</link>
+    
+    
+    <description>Latest announcements from STA Russell</description>
+    
+    
+    <atom:link href="https://dustindoucette.github.io/Demo-RSS-Feed/rss.xml" rel="self" type="application/rss+xml"/>
+    
+    
+    <docs>http://www.rssboard.org/rss-specification</docs>
+    
+    
+    <generator>python-feedgen</generator>
+    
+    
+    <lastBuildDate>Sat, 03 Jan 2026 16:20:40 +0000</lastBuildDate>
+    
+    
+    <item>
+      
+      
+      <title>Monday, December 15th</title>
+      
+      
+      <link>https://sta-russell.cdsbeo.on.ca/apps/pages/index.jsp?uREC_ID=1100697&amp;type=d&amp;pREC_ID=1399309</link>
+      
+      
+      <description>&lt;p&gt;A reminder that course selection sheets for next year are due to your homeroom teacher by Friday. If you have any questions about your choices, please stop by Guidance during lunch.&lt;/p&gt;&lt;p&gt;Attention all students: There will be a student council meeting today at lunch in Room 214. New members are always welcome—come share your ideas and get involved!&lt;/p&gt;&lt;p&gt;Athletics update: The senior boys’ basketball team has a home game tonight at 3:30 p.m. Come out and support the team. Go Ravens!&lt;/p&gt;&lt;p&gt;Community involvement reminder: Students still working on their 40 volunteer hours are encouraged to check the school website for approved opportunities or speak with a Guidance Counsellor for help getting started.&lt;/p&gt;&lt;p&gt;Friendly reminder: Please make sure you are placing garbage and recycling in the correct bins throughout the school. Let’s all do our part to keep our school clean and welcoming.&lt;/p&gt;</description>
+      
+      
+      <guid isPermaLink="false">1d679a60384229a466f92a0490ac6ba74ec4137e8f017218861e3074f63880f6</guid>
+      
+      
+      <pubDate>Sat, 03 Jan 2026 11:20:40 -0500</pubDate>
+      
+    
+    </item>
+    
+    
+    <item>
+      
+      
+      <title>Tuesday, Dec 1</title>
+      
+      
+      <link>https://sta-russell.cdsbeo.on.ca/apps/pages/index.jsp?uREC_ID=1100697&amp;type=d&amp;pREC_ID=1399309</link>
+      
+      
+      <description>&lt;p&gt;jsjdh&lt;/p&gt;&lt;p&gt;qhhj&lt;/p&gt;</description>
+      
+      
+      <guid isPermaLink="false">777d8684762675335413b54db28c49b4bb393fbdbb777e0ee817d652a0f63b05</guid>
+      
+      
+      <pubDate>Sat, 03 Jan 2026 11:20:40 -0500</pubDate>
+      
+    
+    </item>
+    
+  
+  </channel>
+  
+
+</rss>
