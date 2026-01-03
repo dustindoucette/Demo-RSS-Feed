@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup, Tag
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from feedgen.feed import FeedGenerator
+from dateutil import parser as dateparser  # pip install python-dateutil
 
 manual_run = os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch"
 
@@ -36,14 +37,13 @@ if not main:
     raise RuntimeError("Main content not found")
 
 # ---------------------------
-# STATE-BASED extraction
+# Extract headers (<h2>) + paragraphs
 # ---------------------------
 articles = []
 current_title = None
 current_paragraphs = []
 
 for el in main.find_all(True, recursive=True):
-    # New section starts
     if el.name == "h2":
         if current_title and current_paragraphs:
             articles.append({
@@ -54,13 +54,12 @@ for el in main.find_all(True, recursive=True):
         current_paragraphs = []
         continue
 
-    # Collect paragraphs for the current section
     if el.name == "p" and current_title:
         text = normalize(el.get_text())
         if text:
             current_paragraphs.append(text)
 
-# Flush last section
+# Add the last section
 if current_title and current_paragraphs:
     articles.append({
         "title": normalize(current_title),
@@ -69,6 +68,17 @@ if current_title and current_paragraphs:
 
 if not articles:
     raise RuntimeError("No announcements found")
+
+# ---------------------------
+# Sort articles chronologically based on title (parsed as date)
+# ---------------------------
+def parse_date(title: str):
+    try:
+        return dateparser.parse(title)
+    except Exception:
+        return datetime.min  # fallback for non-date headers
+
+articles.sort(key=lambda x: parse_date(x["title"]))  # oldest first
 
 # ---------------------------
 # Hash content
