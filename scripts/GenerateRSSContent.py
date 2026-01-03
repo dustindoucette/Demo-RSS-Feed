@@ -5,9 +5,8 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from feedgen.feed import FeedGenerator
-from xml.dom import minidom
 
-# Detect manual GitHub Actions run
+# Detect if this is a manual GitHub Actions run
 manual_run = os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch"
 
 URL = "https://sta-russell.cdsbeo.on.ca/apps/pages/DailyAnnouncements"
@@ -24,9 +23,7 @@ def hash_content(text: str) -> str:
 # Ensure data folder exists
 os.makedirs("data", exist_ok=True)
 
-# ---------------------------
-# Fetch page
-# ---------------------------
+# Fetch content
 res = requests.get(
     URL,
     headers={"User-Agent": "RSS-Monitor/1.0"},
@@ -35,21 +32,22 @@ res = requests.get(
 res.raise_for_status()
 
 soup = BeautifulSoup(res.text, "html.parser")
+
+# Target main content
 main = soup.find("main")
 if not main:
-    raise RuntimeError("Main content not found")
+    raise RuntimeError("No main content found on page.")
 
-# ---------------------------
-# Extract headers (<h2>) + paragraphs in page order
-# ---------------------------
+# Extract <h2> titles and <p> paragraphs beneath them
 articles = []
 current_title = None
 current_paragraphs = []
 
 for el in main.find_all(True, recursive=True):
     if el.name == "h2":
+        # Save previous article if exists
         if current_title and current_paragraphs:
-            description_html = "".join(f"<p>{p}</p>" for p in current_paragraphs)
+            description_html = "".join(f"<p>{normalize(p)}</p>" for p in current_paragraphs)
             articles.append({
                 "title": normalize(current_title),
                 "description": description_html
@@ -58,73 +56,66 @@ for el in main.find_all(True, recursive=True):
         current_paragraphs = []
         continue
 
+    # Only grab text from <p> tags
     if el.name == "p" and current_title:
-        text = normalize(el.get_text())
+        text = el.get_text(strip=True)
         if text:
             current_paragraphs.append(text)
 
-# Add the last section
+# Add the last article
 if current_title and current_paragraphs:
-    description_html = "".join(f"<p>{p}</p>" for p in current_paragraphs)
+    description_html = "".join(f"<p>{normalize(p)}</p>" for p in current_paragraphs)
     articles.append({
         "title": normalize(current_title),
         "description": description_html
     })
 
 if not articles:
-    raise RuntimeError("No announcements found")
+    raise RuntimeError("No announcements found on the page.")
 
-# ---------------------------
-# Hash content
-# ---------------------------
-hash_source = "".join(a["title"] + a["description"] for a in articles)
-new_hash = hash_content(hash_source)
+# Reverse to keep top-of-page first
+articles.reverse()
 
+# Compute hash to detect changes
+combined_text = "".join(a["title"] + a["description"] for a in articles)
+new_hash = hash_content(combined_text)
 old_hash = None
+
 if os.path.exists(HASH_FILE):
     old_hash = open(HASH_FILE).read().strip()
 
+# Skip update if unchanged and not manual
 if new_hash == old_hash and not manual_run:
     print("No change detected")
     exit(0)
 
-print(f"Updating RSS feed with {len(articles)} items")
+print("Updating RSS feed...")
 
+# Save hash on scheduled runs only
 if not manual_run:
     with open(HASH_FILE, "w") as f:
         f.write(new_hash)
 
-# ---------------------------
-# Build RSS feed
-# ---------------------------
+# Create RSS feed
 fg = FeedGenerator()
 fg.title("STA Russell Announcements")
 fg.description("Latest announcements from STA Russell")
-fg.link(href=URL, rel="alternate")
+fg.link(href="https://dustindoucette.github.io/Demo-RSS-Feed", rel="alternate")
 fg.link(
     href="https://dustindoucette.github.io/Demo-RSS-Feed/rss.xml",
     rel="self",
     type="application/rss+xml"
 )
 
-now = datetime.now(ZoneInfo("America/Toronto"))
-
+# Add each article
 for article in articles:
     fe = fg.add_entry()
     fe.title(article["title"])
     fe.link(href=URL)
-    fe.description(article["description"])  # HTML <p> tags included
-    fe.pubDate(now)
+    fe.description(article["description"])  # plain <p> tags, no CDATA
+    fe.pubDate(datetime.now(ZoneInfo("America/Toronto")))
     fe.guid(hash_content(article["title"] + article["description"]), permalink=False)
 
-# ---------------------------
-# Pretty-print XML and save
-# ---------------------------
-rss_bytes = fg.rss_str(pretty=True)
-dom = minidom.parseString(rss_bytes)
-pretty_xml = dom.toprettyxml(indent="  ", encoding="UTF-8")
-
-with open("rss.xml", "wb") as f:
-    f.write(pretty_xml)
-
-print("RSS feed saved to rss.xml")
+# Write RSS file to repo root
+fg.rss_file("rss.xml")
+print("RSS feed updated successfully.")
