@@ -6,24 +6,19 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from feedgen.feed import FeedGenerator
 
-# Detect if this is a manual GitHub Actions run
 manual_run = os.environ.get("GITHUB_EVENT_NAME") == "workflow_dispatch"
 
 URL = "https://sta-russell.cdsbeo.on.ca/apps/pages/index.jsp?uREC_ID=1100697&type=d&pREC_ID=1399309"
 HASH_FILE = "data/last_hash.txt"
 
 def normalize(text: str) -> str:
-    """Normalize whitespace in text."""
     return " ".join(text.split())
 
 def hash_content(text: str) -> str:
-    """Return SHA256 hash of the given text."""
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
-# Ensure data folder exists
 os.makedirs("data", exist_ok=True)
 
-# Fetch page
 res = requests.get(
     URL,
     headers={"User-Agent": "RSS-Monitor/1.0"},
@@ -38,40 +33,32 @@ if not main:
     raise RuntimeError("Main content not found")
 
 # ----------------------------------
-# Extract announcements
+# Extract announcements (robust)
 # ----------------------------------
 articles = []
 
-current_title = None
-current_body = []
+for block in main.find_all("div"):
+    strong = block.find("strong")
+    if not strong:
+        continue
 
-for el in main.find_all(["h2", "h3", "p"]):
-    if el.name in ["h2", "h3"]:
-        # Save previous article
-        if current_title and current_body:
-            articles.append({
-                "title": normalize(current_title),
-                "description": normalize(" ".join(current_body))
-            })
-        current_title = el.get_text(strip=True)
-        current_body = []
-    elif el.name == "p" and current_title:
-        text = el.get_text(strip=True)
-        if text:
-            current_body.append(text)
+    title = normalize(strong.get_text())
+    full_text = normalize(block.get_text())
 
-# Capture last article
-if current_title and current_body:
-    articles.append({
-        "title": normalize(current_title),
-        "description": normalize(" ".join(current_body))
-    })
+    # Remove title from description
+    description = full_text.replace(title, "").strip()
+
+    if title and description and len(description) > 40:
+        articles.append({
+            "title": title,
+            "description": description
+        })
 
 if not articles:
-    raise RuntimeError("No announcements found")
+    raise RuntimeError("No announcements found (structure may have changed)")
 
 # ----------------------------------
-# Hash entire article set
+# Hash content
 # ----------------------------------
 hash_source = "".join(a["title"] + a["description"] for a in articles)
 new_hash = hash_content(hash_source)
@@ -80,14 +67,12 @@ old_hash = None
 if os.path.exists(HASH_FILE):
     old_hash = open(HASH_FILE).read().strip()
 
-# Skip update if unchanged and not a manual run
 if new_hash == old_hash and not manual_run:
     print("No change detected")
     exit(0)
 
 print(f"Updating RSS feed with {len(articles)} items")
 
-# Save hash only on scheduled runs
 if not manual_run:
     with open(HASH_FILE, "w") as f:
         f.write(new_hash)
@@ -113,9 +98,6 @@ for article in articles:
     fe.link(href=URL)
     fe.description(article["description"])
     fe.pubDate(now)
+    fe.guid(hash_content(article["title"] + article["description"]), permalink=False)
 
-    guid_source = article["title"] + article["description"]
-    fe.guid(hash_content(guid_source), permalink=False)
-
-# Write RSS file to repo root for GitHub Pages
 fg.rss_file("rss.xml")
