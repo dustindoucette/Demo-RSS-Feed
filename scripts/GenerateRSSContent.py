@@ -84,8 +84,6 @@ def parse_date(title: str):
     except Exception:
         return datetime.min
 
-articles.sort(key=lambda x: parse_date(x["title"]))  # oldest first
-
 # ---------------------------
 # Hash content
 # ---------------------------
